@@ -38,7 +38,14 @@ function commandControl()
 
     if (array_key_exists('file', $options) and !array_key_exists('dry_run', $options)) {
         $file = $options["file"];
+        $info = pathinfo($file);
+        if ($info["extension"] == "csv") {
+            insertData($file);
+        } else {
+            echo ("Unsupported file format. Please try again\n");
+        }
     }
+
 
     if (array_key_exists('create_table', $options)) {
         table_creation();
@@ -104,4 +111,25 @@ function table_creation()
     } else {
         echo "Error: " . mysqli_error($conn) . "\n";
     }
+}
+
+function insertData($filename)
+{
+    table_creation();
+    $file = fopen($filename, "r");
+    while (!feof($file)) {
+        $array = fgetcsv($file);
+        $name = $array[0];
+        $surname = $array[1];
+        $email = trim(strtolower($array[2]));
+        $sql = "INSERT INTO userTable (name, surname, email)
+            VALUES ('$name', '$surname', '$email')";
+        global $conn;
+        if ($conn->query($sql) === TRUE) {
+            echo "New record created successfully\n";
+        } else {
+            echo "Error: $conn->error\n";
+        }
+    }
+    fclose($file);
 }
