@@ -6,8 +6,8 @@ a PHP script, that is executed from the command line, which accepts a CSV file a
 
 ### The PHP script can correctly handle the following criteria:
 ```
-• CSV file need to contain user data and have three columns: name, surname, email 
-• CSV file need to have an arbitrary list of users
+• CSV file needs to contain user data and have three columns: name, surname, email 
+• CSV file needs to have an arbitrary list of users
 • Script can iterate through the CSV rows and insert each record into a dedicated MySQL database into the table “users”
 • The users database table can be created/rebuilt as part of the PHP script.
 • Name and surname field can be set to be capitalized e.g. from “john” to “John”
