@@ -8,7 +8,7 @@ $table = "users";
 $conn = new mysqli($host, $username, $password);
 
 
-echo "Script starting now\n";
+echo "Script starting now.\n";
 
 commandControl($host, $username, $password, $conn, $dbname, $table);
 
@@ -40,7 +40,7 @@ function commandControl($host, $username, $password, $conn, $dbname, $table)
             table_creation($conn, $dbname, $table);
             loadData($file, TRUE, $conn, $dbname, $table);
         } else {
-            echo "Unsupported file format. Please try again with a csv file\n";
+            echo "Unsupported file format. Please try again with a csv file.\n";
         }
         $command = TRUE;
     }
@@ -51,14 +51,14 @@ function commandControl($host, $username, $password, $conn, $dbname, $table)
     }
 
     if (array_key_exists('dry_run', $options) and array_key_exists('file', $options)) {
-        echo "Dry run mode: no data will be added to the database.";
+        echo "Dry run mode: no data will be added to the database.\n";
         $file = $options["file"];
         $info = pathinfo($file);
         if ($info["extension"] === "csv") {
             table_creation($conn, $dbname, $table);
             loadData($file, FALSE, $conn, $dbname, $table);
         } else {
-            echo "Unsupported file format. Please try again\n";
+            echo "Unsupported file format. Please try again.\n";
         }
         $command = TRUE;
     }
@@ -84,7 +84,7 @@ function commandControl($host, $username, $password, $conn, $dbname, $table)
     }
 
     if (!$command) {
-        echo "Invalid command. Please enter a valid command(enter --help for full commands list). \n";
+        echo "Invalid command. Please enter a valid command(enter --help for full commands list).\n";
     }
 }
 
@@ -92,12 +92,12 @@ function commandControl($host, $username, $password, $conn, $dbname, $table)
 function help_messages()
 {
     echo
-        "    --file [csv file name] – this is the name of the CSV to be parsed\n 
-    --create_table – this will cause the MySQL users table to be built (and no further action will be taken)\n
+        "    --file [csv file name] – this is the name of the CSV to be parsed.\n 
+    --create_table – this will cause the MySQL users table to be built (and no further action will be taken).\n
     --dry_run – this will be used with the --file directive in the instance that we want to run the script but not insert into the DB. All other functions will be executed, but the database won't be altered.\n
-    -u – MySQL username\n
-    -p – MySQL password\n
-    -h – MySQL host\n";
+    -u – MySQL username.\n
+    -p – MySQL password.\n
+    -h – MySQL host.\n";
 }
 
 // Create the database and table if not exists
@@ -106,9 +106,9 @@ function table_creation($conn, $dbname, $table)
     connection($conn);
     $query = "CREATE DATABASE IF NOT EXISTS $dbname";
     if (mysqli_query($conn, $query)) {
-        echo "Success creating database $dbname\n";
+        echo "Success creating database $dbname.\n";
     } else {
-        echo "Failure creating database $dbname\n";
+        echo "Failure creating database $dbname.\n";
     }
 
     $db_selected = mysqli_select_db($conn, $dbname);
@@ -124,7 +124,7 @@ function table_creation($conn, $dbname, $table)
 
 
     if (mysqli_query($conn, $sql)) {
-        echo "Table $table created successfully\n";
+        echo "Table $table created successfully.\n";
     } else {
         echo "Error: " . mysqli_error($conn) . "\n";
     }
