@@ -23,7 +23,8 @@ function connection()
 }
 
 function commandControl()
-{
+{   
+    global $host, $username, $password;
     $shortOptions = "uph";
     $longOptions  = array(
         "file:",
@@ -32,4 +33,31 @@ function commandControl()
         "help",
     );
     $options = getopt($shortOptions, $longOptions);
+
+
+    if (array_key_exists('file', $options) and !array_key_exists('dry_run', $options)) {
+        $file = $options["file"];
+    }
+
+    if (array_key_exists('create_table', $options)) {
+    }
+
+    if (array_key_exists('dry_run', $options) and array_key_exists('file', $options)) {
+        $file = $options["file"];
+    }
+
+    if (array_key_exists('u', $options)) {
+        echo "MySQL username: " . $username . "\n";
+    }
+
+    if (array_key_exists('p', $options)) {
+        echo "MySQL password: " . $password . "\n";
+    }
+
+    if (array_key_exists('h', $options)) {
+        echo "MySQL host: " . $host . "\n";
+    }
+
+    if (array_key_exists('help', $options)) {
+    }
 }
