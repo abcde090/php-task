@@ -40,9 +40,10 @@ function commandControl()
         $file = $options["file"];
         $info = pathinfo($file);
         if ($info["extension"] === "csv") {
+            table_creation();
             loadData($file, TRUE);
         } else {
-            echo "Unsupported file format. Please try again\n";
+            echo "Unsupported file format. Please try again with a csv file\n";
         }
         $command = TRUE;
     }
@@ -54,6 +55,13 @@ function commandControl()
 
     if (array_key_exists('dry_run', $options) and array_key_exists('file', $options)) {
         $file = $options["file"];
+        $info = pathinfo($file);
+        if ($info["extension"] === "csv") {
+            table_creation();
+            loadData($file, FALSE);
+        } else {
+            echo "Unsupported file format. Please try again\n";
+        }
         $command = TRUE;
     }
 
@@ -80,7 +88,6 @@ function commandControl()
     if (!$command) {
         echo "Invalid command. Please enter a valid command(enter --help for full commands list). \n";
     }
-
 }
 
 function help_messages()
@@ -129,26 +136,26 @@ function loadData($filename, $insert)
 {
     table_creation();
     $file = fopen($filename, "r");
-
+    $count = 0;
     while (!feof($file)) {
-
         $array = fgetcsv($file, 1000, ",");
         $name = string_filter($array[0]);
         $surname = string_filter($array[1]);
-        if (email_filter($array[2])) {
-            echo "This row of data is valid.\n";
+        if (email_filter($array[2], $count)) {
+            echo "Row $count is valid.\n";
             if ($insert) {
                 $email = trim(strtolower($array[2]));
                 $sql = "INSERT INTO userTable (name, surname, email)
                 VALUES ('$name', '$surname', '$email')";
                 global $conn;
                 if ($conn->query($sql)) {
-                    echo "Data inserted into the database successfully.\n";
+                    echo "Row $count has been inserted into the database successfully.\n";
                 } else {
                     echo "Error: $conn->error\n";
                 }
             } 
         }
+        $count++;
     }
     fclose($file);
 }
@@ -163,11 +170,11 @@ function string_filter($string)
 }
 
 //Checks whether email is valid. 
-function email_filter($email)
+function email_filter($email, $count)
 {
     $email = filter_var($email, FILTER_SANITIZE_EMAIL);
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        echo ("This row contains an invalid email address.\n");
+        echo ("Row $count contains an invalid email address.\n");
         return false;
     }
     return true;
