@@ -47,7 +47,6 @@ function commandControl()
         $command = TRUE;
     }
 
-
     if (array_key_exists('create_table', $options)) {
         table_creation();
         $command = TRUE;
@@ -137,21 +136,21 @@ function loadData($filename, $insert)
         $name = string_filter($array[0]);
         $surname = string_filter($array[1]);
         if (email_filter($array[2])) {
-            echo "This row of data is valid.";
+            echo "This row of data is valid.\n";
             if ($insert) {
                 $email = trim(strtolower($array[2]));
                 $sql = "INSERT INTO userTable (name, surname, email)
                 VALUES ('$name', '$surname', '$email')";
                 global $conn;
                 if ($conn->query($sql)) {
-                    echo "Data inserted into the database successfully\n";
+                    echo "Data inserted into the database successfully.\n";
                 } else {
                     echo "Error: $conn->error\n";
                 }
             } 
         }
-        fclose($file);
     }
+    fclose($file);
 }
 
 // Capitalize the first word and remove numbers and special characters of the name
@@ -166,12 +165,9 @@ function string_filter($string)
 //Checks whether email is valid. 
 function email_filter($email)
 {
-    if (preg_match("/[^A-Za-z0-9@.]/", $email)) {
-        echo ("This row contains an invalid email address.\n");
-        return false;
-    }
+    $email = filter_var($email, FILTER_SANITIZE_EMAIL);
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        echo ("This row contains is an invalid email address.\n");
+        echo ("This row contains an invalid email address.\n");
         return false;
     }
     return true;
