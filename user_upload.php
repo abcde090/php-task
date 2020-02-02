@@ -1,27 +1,28 @@
 <?php
-// login details
+// MySQL connection details
 $host = "127.0.0.1";
 $username = "root";
 $password = "";
 $dbname = "myDatabase";
+$table = "users";
 $conn = new mysqli($host, $username, $password);
 
 
 echo "Script starting now\n";
-commandControl();
 
+commandControl($host, $username, $password, $conn, $dbname, $table);
 
-function connection()
+// Open a connection to mySQL server and display connection status
+function connection($conn)
 {
-    global $conn;
     if ($conn->connect_error) {
         die('Error (' . $conn->connect_error . ') ');
     } else echo "Successfully connected to MySQL server.\n";
 }
 
-function commandControl()
+// Handle all command inputs
+function commandControl($host, $username, $password, $conn, $dbname, $table)
 {
-    global $host, $username, $password;
     $shortOptions = "uph";
     $longOptions  = array(
         "file:",
@@ -36,8 +37,8 @@ function commandControl()
         $file = $options["file"];
         $info = pathinfo($file);
         if ($info["extension"] === "csv") {
-            table_creation();
-            loadData($file, TRUE);
+            table_creation($conn, $dbname, $table);
+            loadData($file, TRUE, $conn, $dbname, $table);
         } else {
             echo "Unsupported file format. Please try again with a csv file\n";
         }
@@ -45,16 +46,17 @@ function commandControl()
     }
 
     if (array_key_exists('create_table', $options)) {
-        table_creation();
+        table_creation($conn, $dbname, $table);
         $command = TRUE;
     }
 
     if (array_key_exists('dry_run', $options) and array_key_exists('file', $options)) {
+        echo "Dry run mode: no data will be added to the database.";
         $file = $options["file"];
         $info = pathinfo($file);
         if ($info["extension"] === "csv") {
-            table_creation();
-            loadData($file, FALSE);
+            table_creation($conn, $dbname, $table);
+            loadData($file, FALSE, $conn, $dbname, $table);
         } else {
             echo "Unsupported file format. Please try again\n";
         }
@@ -86,6 +88,7 @@ function commandControl()
     }
 }
 
+// Display help messages
 function help_messages()
 {
     echo
@@ -97,23 +100,22 @@ function help_messages()
     -h – MySQL host\n";
 }
 
-
-function table_creation()
+// Create the database and table if not exists
+function table_creation($conn, $dbname, $table)
 {
-    connection();
-    global $conn, $dbname;
+    connection($conn);
     $query = "CREATE DATABASE IF NOT EXISTS $dbname";
     if (mysqli_query($conn, $query)) {
-        echo "Success creating database\n";
+        echo "Success creating database $dbname\n";
     } else {
-        echo "Failure creating database\n";
+        echo "Failure creating database $dbname\n";
     }
 
     $db_selected = mysqli_select_db($conn, $dbname);
     if (!$db_selected) {
         die('Cannot use the selected database');
     }
-    $sql = "CREATE TABLE IF NOT EXISTS userTable (
+    $sql = "CREATE TABLE IF NOT EXISTS $table (
     name VARCHAR(30) NOT NULL,
     surname VARCHAR(30) NOT NULL,
     email VARCHAR(50) NOT NULL,
@@ -122,16 +124,16 @@ function table_creation()
 
 
     if (mysqli_query($conn, $sql)) {
-        echo "Table userTable created successfully\n";
+        echo "Table $table created successfully\n";
     } else {
         echo "Error: " . mysqli_error($conn) . "\n";
     }
 }
 
 // loadData from csv file, insert data into the database when $insert is true, otherwise dry_run 
-function loadData($filename, $insert)
+function loadData($filename, $insert, $conn, $dbname, $table)
 {
-    table_creation();
+    table_creation($conn, $dbname, $table);
     $file = fopen($filename, "r");
     $count = 0;
     while (!feof($file)) {
@@ -142,7 +144,7 @@ function loadData($filename, $insert)
             echo "Row $count is valid.\n";
             if ($insert === TRUE) {
                 $email = trim(strtolower($array[2]));
-                $sql = "INSERT INTO userTable (name, surname, email)
+                $sql = "INSERT INTO $table (name, surname, email)
                 VALUES ('$name', '$surname', '$email')";
                 global $conn;
                 if ($conn->query($sql)) {
@@ -170,9 +172,10 @@ function string_filter($string)
 function email_filter($email, $count)
 {
     $email = filter_var($email, FILTER_SANITIZE_EMAIL);
+    $email = str_replace("'", "\'", $email);
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         echo ("Row $count contains an invalid email address.\n");
-        return false;
+        return FALSE;
     }
-    return true;
+    return TRUE;
 }
