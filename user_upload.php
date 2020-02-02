@@ -12,8 +12,8 @@ $conn = new mysqli($host, $username, $password);
 
 
 echo "Script starting now\n";
-connection();
 commandControl();
+
 
 function connection()
 {
@@ -34,42 +34,54 @@ function commandControl()
         "help",
     );
     $options = getopt($shortOptions, $longOptions);
-
+    $command = FALSE;
 
     if (array_key_exists('file', $options) and !array_key_exists('dry_run', $options)) {
         $file = $options["file"];
         $info = pathinfo($file);
-        if ($info["extension"] == "csv") {
-            insertData($file);
+        if ($info["extension"] === "csv") {
+            loadData($file, TRUE);
         } else {
-            echo ("Unsupported file format. Please try again\n");
+            echo "Unsupported file format. Please try again\n";
         }
+        $command = TRUE;
     }
 
 
     if (array_key_exists('create_table', $options)) {
         table_creation();
+        $command = TRUE;
     }
 
     if (array_key_exists('dry_run', $options) and array_key_exists('file', $options)) {
         $file = $options["file"];
+        $command = TRUE;
     }
 
     if (array_key_exists('u', $options)) {
         echo "MySQL username: " . $username . "\n";
+        $command = TRUE;
     }
 
     if (array_key_exists('p', $options)) {
         echo "MySQL password: " . $password . "\n";
+        $command = TRUE;
     }
 
     if (array_key_exists('h', $options)) {
         echo "MySQL host: " . $host . "\n";
+        $command = TRUE;
     }
 
     if (array_key_exists('help', $options)) {
         help_messages();
+        $command = TRUE;
     }
+
+    if (!$command) {
+        echo "Invalid command. Please enter a valid command(enter --help for full commands list). \n";
+    }
+
 }
 
 function help_messages()
@@ -86,6 +98,7 @@ function help_messages()
 
 function table_creation()
 {
+    connection();
     global $conn, $dbname;
     $query = "CREATE DATABASE IF NOT EXISTS $dbname";
     if (mysqli_query($conn, $query)) {
@@ -113,23 +126,53 @@ function table_creation()
     }
 }
 
-function insertData($filename)
+function loadData($filename, $insert)
 {
     table_creation();
     $file = fopen($filename, "r");
+
     while (!feof($file)) {
-        $array = fgetcsv($file);
-        $name = $array[0];
-        $surname = $array[1];
-        $email = trim(strtolower($array[2]));
-        $sql = "INSERT INTO userTable (name, surname, email)
-            VALUES ('$name', '$surname', '$email')";
-        global $conn;
-        if ($conn->query($sql) === TRUE) {
-            echo "New record created successfully\n";
-        } else {
-            echo "Error: $conn->error\n";
+
+        $array = fgetcsv($file, 1000, ",");
+        $name = string_filter($array[0]);
+        $surname = string_filter($array[1]);
+        if (email_filter($array[2])) {
+            echo "This row of data is valid.";
+            if ($insert) {
+                $email = trim(strtolower($array[2]));
+                $sql = "INSERT INTO userTable (name, surname, email)
+                VALUES ('$name', '$surname', '$email')";
+                global $conn;
+                if ($conn->query($sql)) {
+                    echo "Data inserted into the database successfully\n";
+                } else {
+                    echo "Error: $conn->error\n";
+                }
+            } 
         }
+        fclose($file);
     }
-    fclose($file);
+}
+
+// Capitalize the first word and remove numbers and special characters of the name
+function string_filter($string)
+{
+    $string = preg_replace("/[^A-Za-z']/", "", $string);
+    $string = trim(ucfirst(strtolower($string)));
+    $string = str_replace("'", "\'", $string);
+    return $string;
+}
+
+//Checks whether email is valid. 
+function email_filter($email)
+{
+    if (preg_match("/[^A-Za-z0-9@.]/", $email)) {
+        echo ("This row contains an invalid email address.\n");
+        return false;
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo ("This row contains is an invalid email address.\n");
+        return false;
+    }
+    return true;
 }
