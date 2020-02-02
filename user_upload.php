@@ -1,8 +1,4 @@
 <?php
-// debug 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 // login details
 $host = "127.0.0.1";
 $username = "root";
@@ -19,7 +15,7 @@ function connection()
 {
     global $conn;
     if ($conn->connect_error) {
-        die('Error (' . $conn->connect_errno . ') ');
+        die('Error (' . $conn->connect_error . ') ');
     } else echo "Successfully connected to MySQL server.\n";
 }
 
@@ -132,6 +128,7 @@ function table_creation()
     }
 }
 
+// loadData from csv file, insert data into the database when $insert is true, otherwise dry_run 
 function loadData($filename, $insert)
 {
     table_creation();
@@ -143,7 +140,7 @@ function loadData($filename, $insert)
         $surname = string_filter($array[1]);
         if (email_filter($array[2], $count)) {
             echo "Row $count is valid.\n";
-            if ($insert) {
+            if ($insert === TRUE) {
                 $email = trim(strtolower($array[2]));
                 $sql = "INSERT INTO userTable (name, surname, email)
                 VALUES ('$name', '$surname', '$email')";
